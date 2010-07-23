@@ -1,0 +1,5 @@
+#summary This page presents the javascript package ClusterMap
+
+= Introduction =
+
+It is very quick because clustering is done once for all and the result is stored in an tree for fast retrieval of useful clusters when the user zooms in or out. 
