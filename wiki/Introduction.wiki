@@ -7,4 +7,4 @@ This project provides a javascript package to visualize clusters of markers on G
 It is very quick and highly configurable.
 It is very quick because clustering is done once for all and the result is stored in an tree for fast retrieval of useful clusters when the user zooms in or out. 
 
-Points are clustered using the [http://code.google.com/p/figue/ figue] javascript clustering library.
+Points are clustered using the [http://code.google.com/p/figue/ figue javascript clustering library].
