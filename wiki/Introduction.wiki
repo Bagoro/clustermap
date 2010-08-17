@@ -9,9 +9,7 @@ Most existing clustering packages need to recluster the points everytime the use
 
 clustermap uses a different approach which makes it faster than most other approaches.
 Points are clustered once for all in a specific structure (a hierarchical tree) where clusters and points that can be displayed at a given scale without cluttering the map can be quickly retrieved.
-The original idea of cluster map was presented in "Visualizing Hierarchical Clusters in Web Mapping Systems, In Proceedings of the 19th ACM International World Wide Web Conference (WWW'10)". 
-
-clustermap uses the hierarchical clustering implementation of the [http://code.google.com/p/figue/ javascript-based clustering package, figue].
+The original idea of cluster map was presented in "Visualizing Hierarchical Clusters in Web Mapping Systems, In Proceedings of the 19th ACM International World Wide Web Conference (WWW'10)". clustermap uses the hierarchical clustering implementation of the [http://code.google.com/p/figue/ javascript-based clustering package, figue].
 
 Examples of maps produced by figue can be found at [http://web.science.mq.edu.au/~jydelort/clustermap/demo.html interactive demo]. 
 
