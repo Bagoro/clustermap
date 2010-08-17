@@ -56,7 +56,7 @@ function initialize() {
 	map.setCenter (new google.maps.LatLng(51.364,4.735)) ;
 	map.setZoom(7) ;
 	
-	// Cluster the markers (Placemarks contained by the KML) and display the cluster on the map 
+	// Cluster the markers (i.e. the Placemarks contained by the KML) and display the cluster on the map 
 	var hcmap = new clustermap.HCMap ({'map': map , 'url': 'examples.kml'}) ;
 
 }
