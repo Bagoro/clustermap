@@ -1,20 +1,17 @@
-#summary This page presents the javascript package ClusterMap
+#summary This page presents the javascript package clustermap
 
 = Introduction =
 
 This project provides a javascript package to display hundreds or even thousands of markers of markers on Google Maps (API v3). To avoid cluttering the map and increase the navigation speed, clusters of markers are automatically determined and displayed on the map.
 
-= Speed =
-
 The key feature of clustermap is its speed.
-
 Most existing clustering packages need to recluster the points everytime the user zooms in or out. As clustering is a time-consuming process, this slows down the navigation. 
 
-ClusterMap uses a different approach which makes it faster than most other approaches.
+clustermap uses a different approach which makes it faster than most other approaches.
 Points are clustered once for all in a specific structure (a hierarchical tree) where clusters and points that can be displayed at a given scale without cluttering the map can be quickly retrieved.
 The original idea of cluster map was presented in "Visualizing Hierarchical Clusters in Web Mapping Systems, In Proceedings of the 19th ACM International World Wide Web Conference (WWW'10)". 
 
-ClusterMap uses the hierarchical clustering implementation of the [http://code.google.com/p/figue/ javascript-based clustering package, figue].
+clustermap uses the hierarchical clustering implementation of the [http://code.google.com/p/figue/ javascript-based clustering package, figue].
 
 Examples of maps produced by figue can be found at [http://web.science.mq.edu.au/~jydelort/clustermap/demo.html interactive demo]. 
 
