@@ -39,9 +39,9 @@ var clustermap = function () {
 								  function () { updateMarkers (thishcmap) ; } 
 								  ) ;
 		
-		if (typeof this._map.getProjection() === 'undefined')
+		if ((typeof this._map.getProjection() === 'undefined') || (this._map.getBounds == null))
 			google.maps.event.addListener(	this._map,
-							"projection_changed", 
+							"tilesloaded", 
 							function () { setTimeout (downloadUrl (thishcmap._kmlurl , function (xmldoc) { processKML (thishcmap, xmldoc) ; } ), 0 )  } 
 							) ;
 		else
@@ -118,7 +118,7 @@ var clustermap = function () {
 		var clusterSize ;
 		
 		var viewport = hcmap._map.getBounds() ;
-		
+
 		var selectedNodes = hcmap._selectedNodes ;
 		for (var i = 0 ; i < selectedNodes.length ; i++) {
 			if (selectedNodes[i].isLeaf()) {
