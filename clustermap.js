@@ -39,7 +39,7 @@ var clustermap = function () {
 								  function () { updateMarkers (thishcmap) ; } 
 								  ) ;
 		
-		if ((typeof this._map.getProjection() === 'undefined') || (this._map.getBounds == null))
+		if ((typeof this._map.getProjection() === 'undefined') || (this._map.getBounds() == null))
 			google.maps.event.addListener(	this._map,
 							"tilesloaded", 
 							function () { setTimeout (downloadUrl (thishcmap._kmlurl , function (xmldoc) { processKML (thishcmap, xmldoc) ; } ), 0 )  } 
