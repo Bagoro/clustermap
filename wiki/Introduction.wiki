@@ -20,6 +20,8 @@ Examples of maps produced by figue can be found at [http://web.science.mq.edu.au
 
 = Full example =
 
+[http://web.science.mq.edu.au/~jydelort/clustermap/example.png]
+
 The previous map is produced by the following code: 
 
 {{{
