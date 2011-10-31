@@ -13,7 +13,6 @@ var clustermap = function () {
 	function HCMap (params) {
 		this._map = params.map ;
 
-		this._kmlurl = params.url ;
 		if (typeof params.styles !== 'undefined')
 			this._styles = params.styles ;
 		else
@@ -107,9 +106,7 @@ var clustermap = function () {
 		
 		// delete current displayed nodes 
 		hcmap.removeMarkers();
-		
-		hcmap._displayedMarkers = new Array () ;
-		
+	
 		// display nodes as markers
 		var position ;
 		var projcoord ;
@@ -232,13 +229,24 @@ var clustermap = function () {
 }() ;
 	
 
+clustermap.HCMap.prototype.reset = function () {
+  this._map = null ;
+  this._positions = new Array () ;
+  this._vectors = new Array () ;
+  this._labels = new Array () ;
+  this._selectedNodes = new Array () ;
+  this._titles = new Array () ;
+  this._tree = null;
+  this.removeMarkers();
+}
+
 clustermap.HCMap.prototype.removeMarkers = function () {
 	if (this._displayedMarkers) {
 		for (var i = 0 ; i < this._displayedMarkers.length ; i++)
 			this._displayedMarkers[i].setMap(null);
-	} 
+	}
+  this._displayedMarkers = new Array();
 }
-
 	
 clustermap.ClusterMarker.prototype = new google.maps.OverlayView();
 	
