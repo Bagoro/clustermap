@@ -42,9 +42,9 @@ Then, given a map object, and a KML file containing markers represented by Place
 }}}
 
  
-= Full example =
+= Visualizing KML files =
 
-You can see [this demo] which shows how to generate Clustermaps from KML files.
+You can see [http://mapcluster.appspot.com/demo/demo.html this demo] which shows how to generate Clustermaps from KML files.
 
 
 }}}
