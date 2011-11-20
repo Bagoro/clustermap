@@ -1,69 +1,78 @@
+/*!
+ * Clustermap v1.0.1
+ *
+ * Copyright 2010, Jean-Yves Delort
+ * Licensed under the MIT license.
+ *
+ */
+
 var clustermap = function () {
-	
+
 	var _map ;
-	var _positions;
 	var _vectors;
-	var _labels;
-	var _titles;
+	var _elements;
 	var _tree;
-	var _minDistance;
+	var _minDistance; // expressed in PIXELS
 	var _selectedNodes;
+	var _linkageType;
 	var _displayedMarkers;
-	
+	var _infowindow;
+
 	function HCMap (params) {
 		this._map = params.map ;
+		this._elements = params.elements;
+		this._infowindow = new google.maps.InfoWindow();
 
-		if (typeof params.styles !== 'undefined')
-			this._styles = params.styles ;
-		else
-			this._styles = defaultStyles() ;
-			
 		if (typeof params.minDistance !== 'undefined')
 			this._minDistance = params.minDistance ;
 		else
-			this._minDistance = 8 ;
+			this._minDistance = 140 ;
 
 		if (typeof params.linkageType !== 'undefined')
 			this._linkageType = params.linkageType ;
 		else
-			this._linkageType = figue.SINGLE_LINKAGE ;
-	
+			this._linkageType = figue.COMPLETE_LINKAGE ;
+		//			this._linkageType = figue.SINGLE_LINKAGE ;
 
 		var thishcmap = this ;
-		google.maps.event.addListener(	this._map,"zoom_changed", 
-						function () { updateNodes (thishcmap) ; } 
+
+		this._vectors = new Array();
+		var labels = new Array();
+
+		if (this._elements.length > 0) {
+			var projection = this._map.getProjection() ;
+
+			// extract the points and convert the lat/lng coordinates to map coordinates
+			for (var i = 0; i < this._elements.length; i++) {
+				var element = this._elements[i];
+				element.latlng = new google.maps.LatLng(element.coordinates.lat, element.coordinates.lng);
+
+				var projcoord = projection.fromLatLngToPoint(element.latlng) ;
+				var vector = [projcoord.x, projcoord.y];
+
+				this._vectors.push (vector) ;
+				labels.push(i);
+			}
+
+			// cluster the map coordinates
+			this._tree = figue.agglomerate (labels,
+					this._vectors,
+					figue.EUCLIDIAN_DISTANCE,
+					this._linkageType) ;
+
+			this._zoom_changed_listener = google.maps.event.addListener(this._map,"zoom_changed",
+					function () { updateNodes(thishcmap); }
 					) ;
 
-		google.maps.event.addListener(	this._map,"bounds_changed", 
-								  function () { updateMarkers (thishcmap) ; } 
-								  ) ;
-		
-		if ((typeof this._map.getProjection() === 'undefined') || (this._map.getBounds() == null))
-			google.maps.event.addListener(	this._map,
-							"tilesloaded", 
-							function () { setTimeout (downloadUrl (thishcmap._kmlurl , function (xmldoc) { processKML (thishcmap, xmldoc) ; } ), 0 )  } 
-							) ;
-		else
-			setTimeout (downloadUrl (thishcmap._kmlurl , function (xmldoc) { processKML (thishcmap, xmldoc) ; } ), 0 ) ;
-		
+			this._bounds_changed_listener = google.maps.event.addListener(this._map, "bounds_changed",
+					function () {
+					updateMarkers (thishcmap) ; } 
+					) ;
+			updateNodes(thishcmap); 
+			updateMarkers (thishcmap) ; 
+		}
 	}
-	
 
-	
-	function defaultStyles() {
-		var sizes = [53, 56, 66, 78];
-		var styles = [];
-		
-		for (var i = 0 ; i < sizes.length ; i++) 
-			styles.push({
-						'imageurl': "images/marker" + (i+2) + ".png",
-						'height': sizes[i],
-						'width': sizes[i]
-						});
-		return styles ;
-	}
-	
-		
 	// Node Selection Algorithm (ref Hierarchical Clusters in Web Mapping Systems, In Proceedings of the 19th ACM International World Wide Web Conference (WWW'10))
 	function selectNodes(node, MCD) {
 		var selectedNodes ;
@@ -83,7 +92,7 @@ var clustermap = function () {
 						selectedNodes = selectedNodes.concat (selectNodes(node.left, MCD)) ;
 				}
 			}
-			
+
 			if (node.right != null) {
 				if (node.right.isLeaf()) 
 					selectedNodes.push(node.right) ;
@@ -95,210 +104,239 @@ var clustermap = function () {
 				}
 			}
 		}
-		
 		return selectedNodes ;
 	}
-	
+
 	function updateMarkers(hcmap) {
-	
 		if (! hcmap._selectedNodes) 
 			return ;
-		
-		// delete current displayed nodes 
-		hcmap.removeMarkers();
-	
-		// display nodes as markers
-		var position ;
-		var projcoord ;
-		var marker ;
-		var styleIndex ;
-		var clusterSize ;
-		
-		var viewport = hcmap._map.getBounds() ;
 
+		// remove visible markers
+		hcmap.removeMarkers();
+
+		// display nodes as markers
+		var viewport = hcmap._map.getBounds() ;
 		var selectedNodes = hcmap._selectedNodes ;
+
+		// TODO(jydelort): clean this hack to fix unshown markers at zoom level 1 or 2
+		var current_zoom_level = hcmap._map.getZoom() ;
+
 		for (var i = 0 ; i < selectedNodes.length ; i++) {
+			var element;
+			var position;
+			var description;
+
 			if (selectedNodes[i].isLeaf()) {
-				position = hcmap._positions[ selectedNodes[i].label ] ;
+				element = hcmap._elements[ selectedNodes[i].label ] ;
+				position = element.latlng;
+				description = element.description;
 			} else {
-				projcoord = new google.maps.Point (selectedNodes[i].centroid[0] / 10000 , selectedNodes[i].centroid[1] / 10000) ;
+				description = "Only leaf nodes contain information";
+				// Convert pixel coordinates to world coordinates
+				var projcoord = new google.maps.Point (selectedNodes[i].centroid[0],
+						selectedNodes[i].centroid[1]) ;
 				position = hcmap._map.getProjection().fromPointToLatLng(projcoord) ;
 			}
 
-			if (! viewport.contains(position))
-				continue ;
-			
-			clusterSize =  selectedNodes[i].size ;
-			styleIndex = calculateStyleIndex(clusterSize);
+			if ((current_zoom_level > 2) && (! viewport.contains(position)))
+				continue;
 
-			marker = new ClusterMarker( {'latlng': position, 'size': clusterSize, 'label': clusterSize , 'style': hcmap._styles[styleIndex]}) ;
+			var clusterSize = selectedNodes[i].size ;
+
+			var width = calculateCircleWidth(clusterSize);
+			var color = calculateColor(hcmap, selectedNodes[i]);
+
+			var marker = new ClusterMarker( {'latlng': position,
+					'size': clusterSize,
+					'color': color,
+					'description': description,
+					'hcmap': hcmap,
+					'width': width});
+
+			google.maps.event.addListener(marker, 'click', function() {
+					// Make the info window go away when clicking anywhere on the Map.
+					});
+
 			marker.setMap(hcmap._map);
 			hcmap._displayedMarkers.push(marker) ;
-			
 		}
-		
+
 	}
-	
-	
+
 	function updateNodes(hcmap) {
-		
-		if (! hcmap._tree) 
-			return ;
-		// determine MCD given zoomlevel
-		// determine the scale (ref: http://msdn.microsoft.com/en-us/library/aa940990.aspx)
-		var scale = 156543.04 * Math.cos( hcmap._map.getCenter().lat() * Math.PI / 180) / Math.pow(2, hcmap._map.getZoom())
-		var MCD = scale * hcmap._minDistance  ;
-		
+		var MCD = hcmap._minDistance/Math.pow(2, hcmap._map.getZoom());
+
 		var selectedNodes = selectNodes (hcmap._tree , MCD) ;
 		if (selectedNodes.length == 0)
 			selectedNodes.push(hcmap._tree) ;
-		
-		hcmap._selectedNodes = selectedNodes ;
-		updateMarkers(hcmap) ;
-	}
-		
 
-	
-	function calculateStyleIndex(cSize) {
+		hcmap._selectedNodes = selectedNodes ;
+	}
+
+	function childrenColors(hcmap, node) {
+		if (node.isLeaf()) 
+			return [hcmap._elements[node.label].color] ;
+
+		var colors = new Array();
+		if (node.left != null) {
+			var ccolors = childrenColors(hcmap, node.left);
+			var len = ccolors.length;
+			for (var i = 0; i < len; i++) {
+				var val = ccolors[i];
+				if (colors.indexOf(val) == -1) colors.push(val);
+			}
+		}
+
+		if (node.right != null) {
+			var ccolors = childrenColors(hcmap, node.right);
+			var len = ccolors.length;
+			for (var i = 0; i < len; i++) {
+				var val = ccolors[i];
+				if (colors.indexOf(val) == -1) colors.push(val);
+			}
+		}
+
+		return colors;
+	}
+
+	function calculateColor(hcmap, node) {
+		var colors = childrenColors(hcmap, node);
+		if (colors.length == 1)
+			return colors[0];
+		else
+			return colors.join(",");
+	}
+
+
+	function calculateCircleWidth(cSize) {
+		var sizes = [27, 36, 45, 58];
+
 		var i = 0 ;
-		while ( Math.round (cSize / 10) > 1 ) {
+		while (i < sizes.length && Math.round (cSize / 10) > 1) {
 			cSize =  Math.round (cSize / 10) ;
 			i++ ;
 		}
-		return i ;
+		return sizes[i] ;
 	}
-	
-	function processKML(hcmap,xmldoc) {
-        hcmap._tree = null ;
-        hcmap._positions = new Array() ;
-        hcmap._vectors = new Array() ;
-        hcmap._labels = new Array () ;
-        hcmap._titles = new Array () ;
-		var placemarks = xmldoc.documentElement.getElementsByTagName("Placemark");
-		if (placemarks.length > 0) {
 
-			var projection = hcmap._map.getProjection() ;
-		
-			// extract the points and convert the lat/lng coordinates to map coordinates
-			var lat, lng, name, coordinates, point, projcoord ;
-			for (var i = 0; i < placemarks.length; i++) {
-				coordinates = placemarks.item(i).getElementsByTagName('coordinates').item(0).firstChild.nodeValue.split(","); ;
-				name = placemarks.item(i).getElementsByTagName('name').item(0).firstChild.nodeValue ;
-				lng = parseFloat (coordinates[0]) ; 
-				lat = parseFloat (coordinates[1]) ;
-				point = new google.maps.LatLng (lat,lng) ;
-				vector = new Array(2) ;
-				projcoord = projection.fromLatLngToPoint(point) ;
-				vector[0] = projcoord.x * 10000 ;
-				vector[1] = projcoord.y * 10000 ;
-				hcmap._positions.push (point) ;
-				hcmap._vectors.push (vector) ;
-				hcmap._labels.push (i) ;
-				hcmap._titles.push(name);
-			}
-	
-			// cluster the points
-			hcmap._tree = figue.agglomerate (hcmap._labels, hcmap._vectors , figue.EUCLIDIAN_DISTANCE,hcmap.linkageType) ;
-			
-		}
-		updateNodes(hcmap) ;
-	}
-	
-	
 	function ClusterMarker(params) {
 		this._latlng = params.latlng ;
 		this._size = params.size ;
-		this._style = params.style ;
-		
-		if (typeof params.label !== 'undefined')
-			this._label = params.label ;
-		else
-			this._label = '' ;
-		
+		this._width = params.width ;
+		this._color = params.color ;
+		this._description = params.description;
+		this._hcmap = params.hcmap;
 		this._div = null ;
 	}
-	
-	
-	
-	
+
 	return {
-		HCMap: HCMap,
-		ClusterMarker: ClusterMarker
+HCMap: HCMap,
+	       ClusterMarker: ClusterMarker
 	}
-	
+
 }() ;
-	
+
 
 clustermap.HCMap.prototype.reset = function () {
-  this._map = null ;
-  this._positions = new Array () ;
-  this._vectors = new Array () ;
-  this._labels = new Array () ;
-  this._selectedNodes = new Array () ;
-  this._titles = new Array () ;
-  this._tree = null;
-  this.removeMarkers();
+	if (this._bounds_changed_listener) {
+		google.maps.event.removeListener(this._bounds_changed_listener);
+		this._bounds_changed_listener = null;
+	}
+
+	if (this._zoom_changed_listener) {
+		google.maps.event.removeListener(this._zoom_changed_listener);
+		this._zoom_changed_listener = null;
+	}
+
+	this._map = null ;
+	this._positions = new Array () ;
+	this._elements = new Array ();
+	this._vectors = new Array () ;
+	this._selectedNodes = new Array () ;
+	this._tree = null;
+	this.removeMarkers();
 }
 
 clustermap.HCMap.prototype.removeMarkers = function () {
 	if (this._displayedMarkers) {
-		for (var i = 0 ; i < this._displayedMarkers.length ; i++)
+		for (var i = 0 ; i < this._displayedMarkers.length ; i++) {
 			this._displayedMarkers[i].setMap(null);
-	}
-  this._displayedMarkers = new Array();
+		}
+	} 
+
+	this._displayedMarkers = new Array () ;
 }
-	
+
+
 clustermap.ClusterMarker.prototype = new google.maps.OverlayView();
-	
-	
+
 clustermap.ClusterMarker.prototype.onAdd = function () {
-		// create the div
-		var div = document.createElement('DIV');
-		div.style.border = 'none';
-		div.style.borderWidth = '0px';
-		div.style.position = 'absolute';
-		div.style.textAlign = 'center'; 
-		div.style.margin = '0px';
-		div.style.padding = '0px';
-		
-		if (typeof this._style.imageurl !== 'undefined')
-			div.style.background = 'url("' + this._style.imageurl + '")';
-		
-		if (typeof this._style.width !== 'undefined')
-			div.style.width = this._style.width  + 'px';
-		
-		if (typeof this._style.height !== 'undefined')	
-			div.style.height = this._style.height  + 'px';
-		
-		// Add the label 
-		div.innerHTML = '<p style="margin: 0px; padding:0px; line-height:' +this._style.height + 'px">' + this._label + '</p>';
-		
-		this._div = div;
-		var panes = this.getPanes();
-		panes.overlayLayer.appendChild(div);
-	};
-	
-	
+	// create the div
+	var div = document.createElement('DIV');
+
+	// set its style
+	div.className += "baseMarker";
+
+	// set its color
+	if (this._color.indexOf(",") > -1)
+	{
+		colors = this._color.split(",");
+		var nbColors = colors.length;
+		var stepSize = 1 / nbColors;
+		var currentStep = 0;
+		var style = "-webkit-gradient(linear, 40% 0%, 0% 62%,";
+		for (var i = 0; i < nbColors; i++) {
+			style += "color-stop(" + currentStep + "," + colors[i] + "),";
+			currentStep += stepSize;
+			style += "color-stop(" + currentStep + "," + colors[i] + ")";
+			if (i < nbColors - 1) style += ",";
+		}
+		style += ")";
+		div.style.backgroundImage = style;
+	}
+	else
+		div.style.background = this._color;
+
+	div.style.opacity = 0.75;
+
+	// set its dimension
+	div.style.width = this._width  + 'px';
+	div.style.height = this._width  + 'px';
+
+	// set the size of the cluster
+	div.innerHTML = '<p style="font-weight:bold; color: white; margin: 0px; padding:0px; line-height:' + this._width + 'px">' + this._size + '</p>';
+
+	this._div = div;
+	this.getPanes().overlayImage.appendChild(div);
+
+	// Register listeners to open up an info window when clicked.
+	var me = this;
+	google.maps.event.addDomListener(div, 'click', function() {
+			var iw = me._hcmap._infowindow;
+			iw.setContent(me._description);
+			iw.setPosition(me._latlng);
+			iw.open(me._hcmap._map);
+			});
+};
+
+
 clustermap.ClusterMarker.prototype.onRemove = function () {
-		this._div.parentNode.removeChild(this._div);
-		this._div = null;
-	} 
-	
-	
+	this._div.parentNode.removeChild(this._div);
+	this._div = null;
+} 
+
+
 clustermap.ClusterMarker.prototype.draw = function() {
-		var overlayProjection = this.getProjection();
-		
-		// Retrieve the southwest and northeast coordinates of this overlay
-		// in latlngs and convert them to pixels coordinates.
-		// We'll use these coordinates to resize the DIV.
-		var sw = overlayProjection.fromLatLngToDivPixel(this._latlng);
-		var ne = overlayProjection.fromLatLngToDivPixel(this._latlng);
-		
-		// Resize the image's DIV to fit the indicated dimensions.
-		var div = this._div;
-		div.style.left = sw.x + 'px';
-		div.style.top = ne.y + 'px';
-		
-	} 
-	
-	
+	var overlayProjection = this.getProjection();
+
+	// Retrieve the southwest and northeast coordinates of this overlay
+	// in latlngs and convert them to pixels coordinates.
+	var loc = overlayProjection.fromLatLngToDivPixel(this._latlng);
+
+	// Set the marker at the right position.
+	this._div.style.left = (loc.x - this._width / 2) + 'px';
+	this._div.style.top = (loc.y - this._width / 2)+ 'px';
+
+} 
+
+

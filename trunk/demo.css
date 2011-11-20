@@ -1,5 +1,18 @@
 body { font-family: sans-serif arial;  font-size: 80%;}
 
+.baseMarker {
+  border:1px solid black;
+  position: absolute;
+  text-align:center;
+  margin: 0px;
+  padding: 0px;
+  -webkit-border-radius: 100%;
+  -moz-border-radius: 100%;
+  border-radius: 100%;
+  z-index: 1;
+}
+
+
 #original_dataset {
 	width:100%;
 	text-align:center;
@@ -58,6 +71,37 @@ body { font-family: sans-serif arial;  font-size: 80%;}
 }
 
 
+.map-legend{
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: #FFF;
+  border: 1px solid black;
+  margin:5px;
+  padding:5px;
+  font-size: 9pt;
+}
+
+.map-legend .line {
+}
+
+.map-legend .colorbox{
+  border: 1px solid black;
+  height:1em;
+  width: 2em;
+  margin:auto 0 ;
+  display:inline-block;
+  vertical-align: middle;
+}
+
+.map-legend .attbox{
+  margin:auto 1em ;
+  padding: 1px;
+  display:inline-block;
+  vertical-align: middle;
+}
+
+#ma
 
 #searchbox {
 	display:block ; 
