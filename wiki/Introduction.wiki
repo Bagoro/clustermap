@@ -11,7 +11,7 @@ clustermap uses a different approach which makes it faster than most other appro
 Points are clustered once for all in a specific structure (a hierarchical tree) where clusters and points that can be displayed at a given scale without cluttering the map can be quickly retrieved.
 The original idea of cluster map was presented in "Visualizing Hierarchical Clusters in Web Mapping Systems, In Proceedings of the 19th ACM International World Wide Web Conference (WWW'10)". clustermap uses the hierarchical clustering implementation of the [http://code.google.com/p/figue/ javascript-based clustering package, figue].
 
-Clustermap is used by a [http://mapcluster.appspot.com|Google Docs Gadget] that represents maps such as this ones.
+Clustermap is used by [http://mapcluster.appspot.com MapCluster, a Gadget] that represents maps such as this ones from a Google Docs Spreadsheet containing addresses.
 
 [http://mapcluster.appspot.com/images/whereabouts_screen.png]
 
