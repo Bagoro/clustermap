@@ -48,7 +48,7 @@ function downloadUrl(url, callback) {
  try {
    request.send(null);
  } catch (e) {
-   changeStatus(e);
+   // changeStatus(e);
  }
 };
 
