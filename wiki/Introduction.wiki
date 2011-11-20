@@ -31,7 +31,7 @@ In order to use cluster, you will need to link to it in the header of your HTML 
 </head>
 }}}
 
-Then, given a map object, and a KML file containing markers represented by Placemarks, a layer of clusters is added by the following line:
+Then, given a [http://code.google.com/apis/maps/documentation/javascript/reference.html#Map Map] object, a layer of clusters is added by the following line:
 
 {{{
    var elements = [ {'label': 'Point 1', 'coordinates': {'lat': 1, 'lng': 2}, 'color': 'blue'},
@@ -44,7 +44,7 @@ Then, given a map object, and a KML file containing markers represented by Place
  
 = Visualizing KML files =
 
-You can see [http://mapcluster.appspot.com/demo/demo.html this demo] which shows how to generate Clustermaps from KML files.
+You can see [http://mapcluster.appspot.com/demo/demo.html this demo] which shows how to generate Clustermaps from KML files and contains a function to transform a KML into the required input format.
 
 
 }}}
