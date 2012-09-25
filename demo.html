@@ -25,7 +25,6 @@ var g_datasets = [ ["Choose a dataset", "Choose a dataset",0,0 , 0] ,
     var g_hcmap = null ;
 
     function initialize() {
-
 	    // initialize the main map
 	    var myOptions = {
 mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -64,6 +63,13 @@ function viewOriginalDataset(){
 }
 
 function changeMap() {
+   if (document.URL.indexOf('http') != 0) {
+     alert('You can only run this demo on a HTTP server.\n' +
+           'This is because cross origin requests are only supported for HTTP\n' +
+           'Look at offline-demo.html for an offline demo.');
+     return;
+   }
+
 	var map_selector = document.getElementById('map_selector') ;
 	var selIndex = map_selector.selectedIndex;
 	if (selIndex == 0) 
@@ -109,9 +115,6 @@ function extractPointsFromKML(xmldoc) {
 </head>
 
 <body onload="initialize()" >
-
-<div id="map_area">
-</div> 
 
 <div id="map_area">
 <div id="map_selection" ><select id="map_selector" onchange="changeMap()"></select></div> <div id="original_dataset"><a href="javascript:void(0)" onclick="viewOriginalDataset()">View dataset without clustering</a></div>
