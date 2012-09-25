@@ -28,8 +28,25 @@ In order to use cluster, you will need to link to it in the header of your HTML 
    <script src="figue.js" type="text/javascript"></script>
    <script src="util.js" type="text/javascript"></script>
    <script src="clustermap.js" type="text/javascript"></script>
+   <style type="text/css">
+.baseMarker {
+  border:1px solid black;
+  position: absolute;
+  text-align:center;
+  margin: 0px;
+  padding: 0px;
+  -webkit-border-radius: 100%;
+  -moz-border-radius: 100%;
+  border-radius: 100%;
+  background-color: "fdj";
+  z-index: 1;
+}
+   </style>
 </head>
 }}}
+
+It is important to define the .baseMarker class which defines the look of the  markers.
+
 
 Then, given a [http://code.google.com/apis/maps/documentation/javascript/reference.html#Map Map] object, a layer of clusters is added by the following line:
 
