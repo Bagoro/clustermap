@@ -34,11 +34,14 @@ In order to use cluster, you will need to link to it in the header of your HTML 
 Then, given a [http://code.google.com/apis/maps/documentation/javascript/reference.html#Map Map] object, a layer of clusters is added by the following line:
 
 {{{
-   var elements = [ {'label': 'Point 1', 'coordinates': {'lat': 1, 'lng': 2}, 'color': 'blue'},
-                             {'label': 'Point 2', 'coordinates': {'lat': 1, 'lng': 20}, 'color': 'red'},
-                             {'label': 'Point 3', 'coordinates': {'lat': 10, 'lng': 2}, 'color': 'yellow'},
-   } 
-   new clustermap.HCMap ({'map': map , 'elements': elements}) ;
+    var elements = [ {'label': 'Point 1', 'coordinates': {'lat': 10, 'lng': 2}, 'color': 'blue'},
+                     {'label': 'Point 2', 'coordinates': {'lat': 9, 'lng': 4}, 'color': 'red'},
+                     {'label': 'Point 3', 'coordinates': {'lat': 11, 'lng': 6}, 'color': 'yellow'}];
+    map.setCenter(new google.maps.LatLng(10, 4)) ;
+    map.setZoom(7) ;
+    google.maps.event.addListener(map, 'bounds_changed', function() {
+      new clustermap.HCMap ({'map': map , 'elements': elements}) ;
+    });
 }}}
 
  
